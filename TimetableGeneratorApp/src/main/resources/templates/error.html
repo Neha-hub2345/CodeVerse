@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Error</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .box { border:1px solid #ddd; padding:16px; border-radius:8px; background:#fff5f5; }
+    pre { white-space: pre-wrap; color:#a33; }
+    a { display:inline-block; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Something went wrong</h1>
+  <div class="box">
+    <p th:text="${error != null ? error : 'Unexpected error'}"></p>
+    <pre th:text="${message}"></pre>
+    <pre th:text="${trace}"></pre>
+  </div>
+  <a href="/">← Go Back</a>
+</body>
+</html>

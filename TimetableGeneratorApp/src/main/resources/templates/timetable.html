@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generated Timetable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background:#0f172a; color:#222; font-family:Segoe UI,Roboto,Arial; margin:0; padding:30px; display:flex; flex-direction:column; align-items:center }
+    h1 { color:#fff; margin-bottom:25px }
+    .card { width:92%; max-width:1000px; background:#f8fafc; border-radius:12px; padding:22px 26px; box-shadow:0 4px 16px rgba(0,0,0,.3); margin-bottom:22px }
+    .header-row { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px }
+    .left { display:flex; gap:12px; align-items:baseline }
+    h2 { margin:0; color:#111827 }
+    .mini { color:#64748b; font-size:13px }
+    .btn-row { display:flex; gap:8px; flex-wrap:wrap }
+    button, .btn { background:#2563eb; border:none; color:#fff; padding:9px 16px; border-radius:6px; font-size:14px; cursor:pointer; text-decoration:none; display:inline-block }
+    button:hover,.btn:hover { background:#1d4ed8 }
+    .inline-btn { background:#475569 }
+    .inline-btn:hover { background:#334155 }
+    .legend { margin:8px 0 0; display:flex; gap:8px; flex-wrap:wrap }
+    .chip { display:inline-block; background:#e2e8f0; color:#111827; padding:5px 10px; border-radius:16px; font-size:12px }
+    .chip .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px }
+    .dot.lec { background:#22c55e } .dot.lab { background:#0ea5e9 } .dot.recess { background:#64748b } .dot.free { background:#94a3b8 }
+    table { width:100%; border-collapse:collapse; margin-top:12px; background:#fff; border-radius:8px; overflow:hidden }
+    th,td { border:1px solid #cbd5e1; text-align:center; padding:10px; font-size:13px; white-space:nowrap }
+    th { background:#f1f5f9 }
+    .cell { display:flex; align-items:center; justify-content:center; gap:8px }
+    .pill { display:inline-flex; padding:3px 8px; border-radius:999px; font-weight:600; font-size:12px; border:1px solid transparent; color:#0f172a }
+    td.lec .pill { background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.35) }
+    td.lab .pill { background:rgba(14,165,233,.18); border-color:rgba(14,165,233,.35) }
+    td.recess .pill { background:rgba(100,116,139,.18); border-color:rgba(100,116,139,.35) }
+    td.free .pill { background:#e2e8f0; border-color:#cbd5e1; color:#111827 }
+    .back-wrap { width:92%; max-width:1000px }
+    .back-link { display:inline-block; color:#e2e8f0; text-decoration:none; margin-top:6px }
+    .back-link:hover { text-decoration:underline }
+  </style>
+</head>
+<body>
+  <h1>📘 Generated Timetable</h1>
+
+  <div class="card" th:if="${htmlTables == null or #maps.isEmpty(htmlTables)}">
+    <p style="margin:0 0 8px">No data to show.</p>
+    <a href="/" class="inline-btn" style="text-decoration:none;padding:8px 12px;border-radius:6px;color:#fff;">← Go Back</a>
+  </div>
+
+  <div th:if="${htmlTables != null and !#maps.isEmpty(htmlTables)}">
+    <div class="card">
+      <div class="header-row">
+        <div class="left">
+          <h2>Overview</h2>
+          <span class="mini" th:text="${'Days: ' + #lists.size(days) + ' · Slots/Day: ' + numSlots}"></span>
+        </div>
+        <div class="btn-row">
+          <a class="btn" href="/history">📜 View Previous Timetables</a>
+          <button class="btn" onclick="window.print()">🖨️ Print</button>
+          <a class="btn" href="/export/csv">⬇️ Download CSV</a>
+          <a class="btn" href="/export/excel">⬇️ Download Excel</a>
+        </div>
+      </div>
+
+      <div class="mini" style="margin-top:4px">
+        <span th:if="${version != null}" th:text="${'Saved as version ' + version}"></span>
+        <span th:if="${runName != null}" th:text="${' · Name: ' + runName}"></span>
+        <span th:if="${runId != null}" th:text="${' · Run ID: ' + runId}"></span>
+      </div>
+
+      <div class="legend">
+        <span class="chip"><span class="dot lec"></span> Lecture</span>
+        <span class="chip"><span class="dot lab"></span> Lab (2 slots)</span>
+        <span class="chip"><span class="dot recess"></span> Recess</span>
+        <span class="chip"><span class="dot free"></span> Free</span>
+      </div>
+    </div>
+
+    <th:block th:each="entry : ${htmlTables.entrySet()}">
+      <div class="card">
+        <div class="header-row">
+          <div class="left">
+            <h2 th:text="${'Division: ' + entry.key}"></h2>
+            <span class="mini" th:text="${'Days: ' + #lists.size(days) + ' · Slots/Day: ' + numSlots}"></span>
+          </div>
+          <div class="btn-row">
+            <button class="inline-btn" th:attr="data-division=${entry.key}" onclick="exportDivision(event)">Export CSV</button>
+          </div>
+        </div>
+        <div th:utext="${entry.value}"></div>
+      </div>
+    </th:block>
+
+    <div class="back-wrap">
+      <a href="/" class="back-link">← Go Back</a>
+    </div>
+  </div>
+
+  <script>
+    function tableToCsv(tbl){
+      const rows = Array.from(tbl.querySelectorAll("tr"));
+      return rows.map(tr=>{
+        const cells = Array.from(tr.children);
+        return cells.map(td=>{
+          let txt = td.innerText.replace(/\s+/g,' ').trim();
+          if(txt.includes(',')) txt = `"${txt}"`;
+          return txt;
+        }).join(',');
+      }).join('\\n');
+    }
+    function download(name, text){
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'}));
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    }
+    function exportDivision(ev){
+      const division = ev.currentTarget.getAttribute('data-division');
+      const tbl = document.querySelector(`table[data-division="${CSS.escape(division)}"]`);
+      if(!tbl) return;
+      download(`timetable_${division}.csv`, tableToCsv(tbl));
+    }
+  </script>
+</body>
+</html>

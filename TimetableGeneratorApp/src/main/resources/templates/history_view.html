@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Timetable Run</title>
+  <style>
+    body{font-family:Segoe UI,Arial; background:#0f172a; color:#fff; margin:0; padding:30px}
+    .wrap{max-width:1100px; margin:0 auto; background:#f8fafc; color:#111; border-radius:12px; padding:22px; box-shadow:0 4px 16px rgba(0,0,0,.3)}
+    h1{margin-top:0}
+    .toolbar{display:flex; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px}
+    .btn{display:inline-block; padding:6px 10px; border-radius:6px; background:#2563eb; color:#fff; text-decoration:none; border:none; cursor:pointer}
+    .btn:hover{background:#1d4ed8}
+    table{width:100%; border-collapse:collapse; margin-top:12px; background:#fff}
+    th,td{border:1px solid #cbd5e1; padding:8px; text-align:center; font-size:14px; white-space:nowrap}
+    th{background:#f1f5f9}
+    .muted{color:#64748b}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <h1>Timetable Run</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="/history" class="btn" style="background:#475569">← Back</a>
+      <button class="btn" onclick="window.print()">🖨️ Print</button>
+      <a class="btn" th:href="@{'/export/history/csv'(runId=${runId})}">⬇️ CSV</a>
+      <a class="btn" th:href="@{'/export/history/excel'(runId=${runId})}">⬇️ Excel</a>
+    </div>
+  </div>
+
+  <p class="muted">Run ID: <span th:text="${runId}"></span></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Division</th>
+        <th>Day</th>
+        <th>Slot</th>
+        <th>Type</th>
+        <th>Faculty</th>
+        <th>Subject</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="row : ${rows}">
+        <td th:text="${row.divisionname}"></td>
+        <td th:text="${row.dayname}"></td>
+        <td th:text="${row.slotno}"></td>
+        <td th:text="${row.session_type}"></td>
+        <td th:text="${row.facultyname}"></td>
+        <td th:text="${row.subjectname}"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

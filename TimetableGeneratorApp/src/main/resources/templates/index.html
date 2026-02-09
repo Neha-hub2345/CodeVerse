@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>📘 Timetable Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background: #0f172a;
+      color: #222;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #fff;
+      margin-bottom: 25px;
+    }
+    form {
+      width: 92%;
+      max-width: 900px;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 25px 30px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    section {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    section h2 {
+      margin-top: 0;
+      color: #111827;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 10px;
+      color: #1e293b;
+    }
+    small {
+      display: block;
+      color: #64748b;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      margin-top: 4px;
+      font-size: 14px;
+    }
+    button {
+      background: #2563eb;
+      border: none;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .inline-btn {
+      background: #475569;
+      margin-top: 10px;
+      margin-right: 5px;
+      font-size: 13px;
+    }
+    .inline-btn:hover {
+      background: #334155;
+    }
+    .chip {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #111;
+      padding: 5px 10px;
+      border-radius: 16px;
+      margin: 4px;
+      font-size: 13px;
+    }
+    .chip button {
+      background: transparent;
+      color: #000;
+      border: none;
+      font-weight: bold;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+    }
+    th {
+      background: #f1f5f9;
+    }
+    .generate-btn {
+      background: #16a34a;
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    .generate-btn:hover {
+      background: #15803d;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>📘 Timetable Generator</h1>
+
+  <p style="text-align:right; max-width:900px; width:92%; margin:8px auto;">
+    <a href="/history" style="color:#93c5fd; text-decoration:none;">📜 View Previous Timetables</a>
+  </p>
+
+  <form th:action="@{/generate}" method="post">
+    <!-- BASICS -->
+    <section>
+      <h2>Basics</h2>
+      <label>Number of Days:</label>
+      <input type="number" name="numDays" min="1" required />
+
+      <label>Days (comma separated):</label>
+      <input type="text" name="days" placeholder="e.g. Mon,Tue,Wed,Thu,Fri" required />
+      <small>Enter days in order as they appear in the week.</small>
+
+      <label>Number of Slots per Day:</label>
+      <input type="number" name="numSlots" min="1" required />
+      <small>Total slots (lectures + recess) available in a day.</small>
+
+      <label>Max Lectures per Day (per faculty):</label>
+      <input type="number" name="maxLecturesPerDay" min="1" required />
+      <small>Maximum number of lectures one faculty can take per day.Please count lab as 2 lectures</small>
+
+      <!-- ADD inside <section> Basics -->
+      <label>Run name (optional):</label>
+      <input type="text" name="runName" placeholder="e.g. Mid-Semester Draft" />
+    </section>
+
+    <!-- DIVISIONS & SUBJECTS -->
+    <section>
+      <h2>Divisions & Subjects</h2>
+      <label>Number of Divisions:</label>
+      <input type="number" name="numDiv" min="1" required />
+
+      <label>Divisions (comma separated):</label>
+      <input type="text" id="divisions" name="divisions" placeholder="e.g. A,B,C" required />
+
+      <label>Subject Names (comma separated):</label>
+      <input type="text" id="subjectNames" name="subjectNames" placeholder="e.g. Math,Physics,Chemistry" required />
+
+      <label>Lab Subjects (comma separated):</label>
+      <input type="text" id="labSubjects" name="labSubjects" placeholder="e.g. Physics Lab,Chemistry Lab" />
+      <small>Include subjects that only have labs and no lectures too. These will appear in the plan dropdown.</small>
+    </section>
+
+    <!-- RECESS BUILDER -->
+    <section>
+      <h2>Recess</h2>
+      <label>Start slot:</label>
+      <input type="number" id="recessStart" placeholder="e.g. 3" />
+      <label>End slot:</label>
+      <input type="number" id="recessEnd" placeholder="e.g. 3" />
+      <button type="button" class="inline-btn" onclick="addRecess()">+ Add Recess</button>
+      <button type="button" class="inline-btn" onclick="clearRecess()">Clear</button>
+
+      <input type="hidden" name="recessRanges" id="recessRanges" />
+      <div id="recessList"></div>
+      <small>Add one or more ranges per day. Example: 3-3 (single-slot), 6-7 (two-slot).</small>
+    </section>
+
+    <!-- WEEKLY TOTALS -->
+    <section>
+      <h2>Weekly Defaults</h2>
+      <label>Total Lectures (per subject × division × week):</label>
+      <input type="number" name="totalLectures" value="4" required />
+      <small>Default number of lectures each subject should have weekly per division.</small>
+
+      <label>Total Labs (per lab-subject × division × week):</label>
+      <input type="number" name="totalLabs" value="1" required />
+      <small>Default number of lab sessions each lab subject should have weekly per division.</small>
+    </section>
+
+    <!-- PER-DIVISION SUBJECT PLAN -->
+    <section>
+      <h2>Per-Division Subject Plan (Visual Builder)</h2>
+      <small>Use this to override defaults for specific divisions or subjects.</small>
+
+      <label>Division:</label>
+      <select id="planDivision"></select>
+
+      <label>Subject:</label>
+      <select id="planSubject"></select>
+
+      <label>Lectures / week:</label>
+      <input type="number" id="planLectures" min="0" value="4" />
+
+      <label>Labs / week:</label>
+      <input type="number" id="planLabs" min="0" value="1" />
+
+      <label>Lecture Faculty:</label>
+      <input type="text" id="planLectureFaculty" placeholder="e.g. Prof A" />
+
+      <label>Lab Faculty:</label>
+      <input type="text" id="planLabFaculty" placeholder="e.g. Prof B" />
+
+      <button type="button" class="inline-btn" onclick="addPlan()">+ Add to Plan</button>
+      <button type="button" class="inline-btn" onclick="clearPlan()">Clear Plan</button>
+
+      <table id="planTable">
+        <thead>
+          <tr>
+            <th>Division</th>
+            <th>Subject</th>
+            <th>Lectures/wk</th>
+            <th>Labs/wk</th>
+            <th>Lecture Faculty</th>
+            <th>Lab Faculty</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <input type="hidden" name="planCsv" id="planCsv" />
+    </section>
+
+    <button type="submit" class="generate-btn">Generate Timetable</button>
+  </form>
+
+  <script>
+    const divInput = document.getElementById('divisions');
+    const subInput = document.getElementById('subjectNames');
+    const labInput = document.getElementById('labSubjects');
+    const planDivision = document.getElementById('planDivision');
+    const planSubject = document.getElementById('planSubject');
+
+    function refreshDropdowns() {
+      const divs = (divInput.value || '').split(',').map(d => d.trim()).filter(Boolean);
+      const subsSet = new Set([
+        ...(subInput.value || '').split(',').map(s => s.trim()),
+        ...(labInput.value || '').split(',').map(l => l.trim())
+      ]);
+      const subs = Array.from(subsSet).filter(Boolean);
+
+      planDivision.innerHTML = divs.map(d => `<option value="${d}">${d}</option>`).join('');
+      planSubject.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+    divInput.addEventListener('input', refreshDropdowns);
+    subInput.addEventListener('input', refreshDropdowns);
+    labInput.addEventListener('input', refreshDropdowns);
+
+    const recessRangesArr = [];
+    function addRecess() {
+      const start = document.getElementById('recessStart').value;
+      const end = document.getElementById('recessEnd').value;
+      if (!start || !end) return;
+      recessRangesArr.push(`${start}-${end}`);
+      renderRecess();
+    }
+    function clearRecess() {
+      recessRangesArr.length = 0;
+      renderRecess();
+    }
+    function removeRecess(idx) {
+      recessRangesArr.splice(idx, 1);
+      renderRecess();
+    }
+    function renderRecess() {
+      const list = document.getElementById('recessList');
+      const hidden = document.getElementById('recessRanges');
+      list.innerHTML = recessRangesArr.map((r, i) =>
+        `<span class="chip">${r}<button type="button" onclick="removeRecess(${i})">&times;</button></span>`
+      ).join('');
+      hidden.value = recessRangesArr.join(',');
+    }
+
+    const planTableBody = document.querySelector('#planTable tbody');
+    const planCsvInput = document.getElementById('planCsv');
+    const plan = [];
+
+    function addPlan() {
+      const div = planDivision.value;
+      const sub = planSubject.value;
+      const lec = document.getElementById('planLectures').value;
+      const lab = document.getElementById('planLabs').value;
+      const lecFac = document.getElementById('planLectureFaculty').value;
+      const labFac = document.getElementById('planLabFaculty').value;
+
+      if (!div || !sub) return;
+
+      plan.push({
+        division: (div || '').trim(),
+        subject: (sub || '').trim(),
+        lectures: String(lec ?? '0').trim(),
+        labs: String(lab ?? '0').trim(),
+        lecFac: (lecFac || '').trim(),
+        labFac: (labFac || '').trim()
+      });
+      renderPlan();
+    }
+    function clearPlan() {
+      plan.length = 0;
+      renderPlan();
+    }
+    function removePlan(idx) {
+      plan.splice(idx, 1);
+      renderPlan();
+    }
+    function csvEscape(v) {
+      const s = String(v ?? '');
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    }
+    function renderPlan() {
+      planTableBody.innerHTML = plan.map((p, i) => `
+        <tr>
+          <td>${p.division}</td>
+          <td>${p.subject}</td>
+          <td>${p.lectures}</td>
+          <td>${p.labs}</td>
+          <td>${p.lecFac}</td>
+          <td>${p.labFac}</td>
+          <td><button type="button" onclick="removePlan(${i})">❌</button></td>
+        </tr>
+      `).join('');
+
+      const csv = plan.map(p =>
+        [
+          csvEscape(p.division),
+          csvEscape(p.subject),
+          csvEscape(p.lectures),
+          csvEscape(p.labs),
+          csvEscape(p.lecFac),
+          csvEscape(p.labFac)
+        ].join(',')
+      ).join('\n');
+
+      planCsvInput.value = csv;
+    }
+
+    refreshDropdowns();
+  </script>
+</body>
+</html>
